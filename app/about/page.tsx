@@ -27,7 +27,7 @@ export default async function AboutPage() {
 
   return (
     <main className="min-h-screen bg-[#faf8f3] text-foreground">
-      <header className="border-b border-border/70 bg-white">
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-white/95 shadow-sm backdrop-blur">
         <div className="mx-auto flex min-h-[74px] max-w-7xl items-center justify-between gap-6 px-5 sm:px-8">
           <Link href="/" className="flex items-center gap-2.5">
             <Image src="/Agape%20logo.png" alt="Agape Word Chapel logo" width={72} height={72} className="h-16 w-16 object-contain sm:h-[4.5rem] sm:w-[4.5rem]" priority />

@@ -36,7 +36,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-background font-sans">
-      <header className="border-b border-border/70 bg-white">
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-white/95 shadow-sm backdrop-blur">
         <div className="mx-auto flex min-h-[74px] max-w-7xl items-center justify-between gap-6 px-5 sm:px-8">
           <Link href="/" className="shrink-0 leading-none">
             <span className="flex items-center gap-2.5">

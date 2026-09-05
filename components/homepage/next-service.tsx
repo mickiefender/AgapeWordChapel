@@ -63,21 +63,21 @@ export function NextService({ service }: { service: HomepageService }) {
   const isLive = now !== null && now >= startTimestamp && now < endTimestamp;
 
   return (
-    <section className="border-b border-border/70 bg-card">
-      <div className="mx-auto grid max-w-7xl gap-7 px-5 py-10 sm:px-8 lg:grid-cols-[1fr_auto] lg:items-center lg:py-12">
+    <section className="block w-full border-b border-border/70 bg-card">
+      <div className="mx-auto grid w-full max-w-7xl gap-7 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[1fr_auto] lg:items-center lg:py-12">
         <div>
           <p className={`inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] ${isLive ? "text-red-600" : "text-primary"}`}>
             {isLive && <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-600" />}
             {isLive ? "Live service" : "Next service"}
           </p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{service.name}</h2>
+          <h2 className="mt-2 break-words text-2xl font-bold tracking-tight sm:text-3xl">{service.name}</h2>
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2"><CalendarPlus className="h-4 w-4 text-primary" />{formatDate(service.date)}</span>
             <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4 text-primary" />{formatTime(service.start_time)}</span>
             <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />Agape Word Chapel International</span>
           </div>
         </div>
-        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center lg:flex-col lg:items-end">
+        <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center lg:flex-col lg:items-end">
           {isLive ? (
             service.facebook_live_url ? (
               <Button className="gap-2 bg-red-600 text-white hover:bg-red-700" size="sm" asChild>
@@ -92,7 +92,7 @@ export function NextService({ service }: { service: HomepageService }) {
             )
           ) : (
             <>
-              <div className="flex gap-2 text-center">
+              <div className="flex w-full gap-2 overflow-x-auto text-center">
                 {[[days, "Days"], [hours, "Hours"], [minutes, "Min"], [seconds, "Sec"]].map(([value, label]) => (
                   <div key={label} className="min-w-14 rounded-lg border bg-background px-2 py-2"><p className="text-xl font-bold tabular-nums">{String(value).padStart(2, "0")}</p><p className="text-[10px] uppercase text-muted-foreground">{label}</p></div>
                 ))}
