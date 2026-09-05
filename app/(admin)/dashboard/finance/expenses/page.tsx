@@ -76,7 +76,7 @@ export default async function ExpensesPage() {
                       <td className="px-3 py-4"><StatusBadge status={expense.approvalStatus} />{expense.rejectionReason && <p className="mt-1 max-w-xs text-xs text-destructive">{expense.rejectionReason}</p>}</td>
                       <td className="px-3 py-4 text-right font-semibold">{money.format(expense.amount)}</td>
                       <td className="px-3 py-4 text-right">
-                        {expense.approvalStatus === "pending" ? <div className="flex justify-end gap-2"><form action={reviewExpense.bind(null, expense.id, "approved")}><Button size="sm" type="submit"><Check className="h-3.5 w-3.5" /> Approve</Button></form><form action={reviewExpense.bind(null, expense.id, "rejected")}><Button size="sm" variant="outline" type="submit"><X className="h-3.5 w-3.5" /> Reject</Button></form></div> : <span className="text-xs text-muted-foreground">{expense.approverName || "—"}</span>}
+                        {expense.approvalStatus === "pending" ? <div className="flex justify-end gap-2"><form action={async () => { "use server"; await reviewExpense(expense.id, "approved"); }}><Button size="sm" type="submit"><Check className="h-3.5 w-3.5" /> Approve</Button></form><form action={async (formData: FormData) => { "use server"; await reviewExpense(expense.id, "rejected", formData.get("rejectionReason")?.toString()); }}><Button size="sm" variant="outline" type="submit"><X className="h-3.5 w-3.5" /> Reject</Button></form></div> : <span className="text-xs text-muted-foreground">{expense.approverName || "—"}</span>}
                       </td>
                     </tr>
                   ))}

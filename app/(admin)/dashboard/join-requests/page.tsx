@@ -11,6 +11,7 @@ const statusLabels = {
   pending: "Pending",
   approved: "Approved",
   declined: "Declined",
+  rejected: "Rejected",
 } as const;
 
 export default async function JoinRequestsPage() {
@@ -65,13 +66,13 @@ export default async function JoinRequestsPage() {
 
               {request.status !== "approved" && (
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <form action={approveJoinRequest.bind(null, request.id)}>
+                  <form action={async () => { await approveJoinRequest(request.id); }}>
                     <Button type="submit" size="sm" className="gap-2">
                       <Check className="h-4 w-4" />
                       Accept
                     </Button>
                   </form>
-                  <form action={deleteJoinRequest.bind(null, request.id)}>
+                  <form action={async () => { await deleteJoinRequest(request.id); }}>
                     <Button type="submit" size="sm" variant="destructive" className="gap-2">
                       <Trash2 className="h-4 w-4" />
                       Delete

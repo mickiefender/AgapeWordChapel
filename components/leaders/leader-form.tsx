@@ -17,7 +17,7 @@ export function LeaderForm({ leader }: { leader?: Leader }) {
 
   async function handleSubmit(formData: FormData) {
     setError(null);
-    const result = isEdit ? await updateLeader(leader.id, formData) : await createLeader(formData);
+    const result = leader ? await updateLeader(leader.id, formData) : await createLeader(formData);
     if (result?.error) setError(result.error);
   }
 

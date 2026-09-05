@@ -106,15 +106,15 @@ export function SermonForm({ sermon }: { sermon?: Sermon }) {
           <p className="text-sm font-semibold">Sermon media</p>
           <p className="mt-1 text-xs text-muted-foreground">Select an image, audio recording, or video. Files can be up to 100MB.</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            {[
+            {([
               ["image", "Picture", "image/png,image/jpeg,image/webp", sermon?.image_url],
               ["audio", "Audio", "audio/*", sermon?.audio_url],
               ["video", "Video", "video/*", sermon?.video_url],
-            ].map(([name, label, accept, current]) => (
+            ] as [string, string, string, string | null | undefined][]).map(([name, label, accept, current]) => (
               <label key={name} className="cursor-pointer rounded-lg border bg-background p-3 text-sm font-medium hover:border-primary">
                 <span className="block">{label}</span>
                 <span className="mt-1 block truncate text-xs font-normal text-muted-foreground">{current ? "File already attached" : "Choose file"}</span>
-                <input name={name} type="file" accept={accept} className="mt-3 block w-full text-xs" />
+                <input name={name} type="file" accept={accept || undefined} className="mt-3 block w-full text-xs" />
               </label>
             ))}
           </div>
