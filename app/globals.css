@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f8f9;
+  --foreground: #0f172a;
+
+  --primary: #0e7490;
+  --primary-foreground: #ffffff;
+  --primary-soft: #ecfeff;
+
+  --secondary: #fef3c7;
+  --secondary-foreground: #92400e;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #e0f2fe;
+  --accent-foreground: #0c4a6e;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #fafaf9;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --border: #e4e9ed;
+  --input: #cbd5e1;
+  --ring: #0e7490;
+
+  --sidebar: #0b3e53;
+  --sidebar-foreground: #e6f4f8;
+  --sidebar-accent: #155e75;
+  --sidebar-muted: #94b4c2;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-muted: var(--sidebar-muted);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.12);
+  --shadow-soft: 0 2px 8px -2px rgb(15 23 42 / 0.06), 0 12px 28px -16px rgb(15 23 42 / 0.16);
+  --shadow-lift: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 20px 40px -20px rgb(15 23 42 / 0.24);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sermon-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 0.625rem));
+  }
+}
+
+.sermon-marquee-track {
+  animation: sermon-marquee 72s linear infinite;
+}
+
+@keyframes announcement-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.announcement-ticker-track {
+  animation: announcement-ticker 34s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sermon-marquee-track,
+  .announcement-ticker-track {
+    animation-play-state: paused;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for the warm theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
