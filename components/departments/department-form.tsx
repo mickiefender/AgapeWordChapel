@@ -20,8 +20,6 @@ export function DepartmentForm({ department, members }: { department?: Departmen
   const [galleryCount, setGalleryCount] = useState(0);
   const isEdit = !!department;
 
-  const existingGallery = JSON.stringify(department?.gallery ?? []);
-
   function handleCoverChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (file) setCoverPreview(URL.createObjectURL(file));
@@ -112,8 +110,9 @@ export function DepartmentForm({ department, members }: { department?: Departmen
         <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4">
           <p className="text-sm font-semibold">Gallery images</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {department?.gallery?.length ?? 0} existing image{(department?.gallery?.length ?? 0) === 1 ? "" : "s"}
-            {galleryCount > 0 ? ` · ${galleryCount} new selected` : ""}. New images are added to the page gallery.
+            {department?.gallery?.length ?? 0} image{(department?.gallery?.length ?? 0) === 1 ? "" : "s"} in the gallery
+            {galleryCount > 0 ? ` · ${galleryCount} new selected` : ""}. New images are appended to the public page gallery.
+            {isEdit ? " Reorder or remove photos from the department page." : ""}
           </p>
           <label className="mt-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
             <ImageIcon className="h-4 w-4" />
@@ -127,7 +126,6 @@ export function DepartmentForm({ department, members }: { department?: Departmen
               className="sr-only"
             />
           </label>
-          <input type="hidden" name="existing_gallery" value={existingGallery} />
         </div>
 
         <div className="space-y-2">

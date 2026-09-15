@@ -3,10 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
+import { sanitizeGallery } from "@/lib/department-media";
+import {
+  deleteDepartmentImages,
+  uploadDepartmentGallery,
+  uploadDepartmentImage,
+} from "@/lib/department-storage";
 import { z } from "zod";
-import { randomUUID } from "crypto";
 
 const departmentSchema = z.object({
   name: z.string().min(1, { message: "Department name is required." }),
@@ -19,101 +23,69 @@ const departmentSchema = z.object({
 
 export type DepartmentActionError = { error: string };
 
-function parseGallery(value: string | null): string[] {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    return [];
-  }
-}
+/** Fields handled separately from the plain text columns. */
+const MEDIA_FIELDS = new Set(["image", "gallery", "existing_gallery"]);
 
 function cleanFormData(formData: FormData): Record<string, unknown> {
   const raw = Object.fromEntries(formData.entries());
   const cleaned: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(raw)) {
-    if (key === "image" || key === "gallery" || key === "existing_gallery") continue;
+    if (MEDIA_FIELDS.has(key)) continue;
     cleaned[key] = typeof value === "string" && value.trim() === "" ? null : value;
   }
   return cleaned;
 }
 
-async function uploadDepartmentImage(file: File): Promise<string> {
-  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `department-media/${randomUUID()}.${extension}`;
-
-  const admin = createAdminClient();
-  const { data: buckets } = await admin.storage.listBuckets();
-  if (!buckets?.some((bucket) => bucket.name === "department-media")) {
-    await admin.storage.createBucket("department-media", { public: true });
-  }
-
-  const { error } = await admin.storage.from("department-media").upload(
-    path,
-    Buffer.from(await file.arrayBuffer()),
-    {
-      contentType: file.type || "image/jpeg",
-      upsert: true,
-    },
-  );
-  if (error) throw new Error(error.message);
-
-  const { data } = admin.storage.from("department-media").getPublicUrl(path);
-  return data.publicUrl;
+/** Upload the optional cover image submitted alongside the department fields. */
+async function uploadCoverIfPresent(formData: FormData): Promise<string | null> {
+  const cover = formData.get("image");
+  if (!(cover instanceof File) || cover.size === 0) return null;
+  return uploadDepartmentImage(cover);
 }
 
-async function getDepartmentMedia(formData: FormData, existingGallery: string[]) {
-  const cover = formData.get("image");
-  let imageUrl: string | null = null;
-  if (cover instanceof File && cover.size > 0) {
-    imageUrl = await uploadDepartmentImage(cover);
+/** Read the gallery currently stored for a department — the source of truth. */
+async function readStoredGallery(id: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("departments").select("gallery").eq("id", id).maybeSingle();
+  return sanitizeGallery((data?.gallery as string[] | null) ?? []);
+}
+
+function revalidateDepartment(id?: string): void {
+  revalidatePath("/dashboard/departments");
+  revalidatePath("/ministries");
+  if (id) {
+    revalidatePath(`/dashboard/departments/${id}`);
+    revalidatePath(`/ministries/${id}`);
   }
-
-  const galleryFiles = formData
-    .getAll("gallery")
-    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
-
-  const newGallery: string[] = [];
-  for (const file of galleryFiles) {
-    newGallery.push(await uploadDepartmentImage(file));
-  }
-
-  return { imageUrl, gallery: [...existingGallery, ...newGallery] };
 }
 
 export async function createDepartment(formData: FormData): Promise<DepartmentActionError | void> {
   await requireAdmin();
 
   const supabase = await createClient();
-  const cleaned = cleanFormData(formData);
-
-  const parsed = departmentSchema.safeParse(cleaned);
+  const parsed = departmentSchema.safeParse(cleanFormData(formData));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid department data." };
   }
 
-  let media: Awaited<ReturnType<typeof getDepartmentMedia>>;
+  let imageUrl: string | null;
+  let gallery: string[];
   try {
-    media = await getDepartmentMedia(formData, []);
+    imageUrl = await uploadCoverIfPresent(formData);
+    gallery = await uploadDepartmentGallery(formData);
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Unable to upload department media." };
   }
 
   const { error } = await supabase
     .from("departments")
-    .insert({
-      ...parsed.data,
-      image_url: media.imageUrl,
-      gallery: media.gallery,
-    })
+    .insert({ ...parsed.data, image_url: imageUrl, gallery })
     .select()
     .single();
 
   if (error) return { error: error.message };
 
-  revalidatePath("/dashboard/departments");
-  revalidatePath("/ministries");
+  revalidateDepartment();
   redirect("/dashboard/departments");
 }
 
@@ -121,32 +93,33 @@ export async function updateDepartment(id: string, formData: FormData): Promise<
   await requireAdmin();
 
   const supabase = await createClient();
-  const cleaned = cleanFormData(formData);
-
-  const parsed = departmentSchema.safeParse(cleaned);
+  const parsed = departmentSchema.safeParse(cleanFormData(formData));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid department data." };
   }
 
-  const existingGallery = parseGallery(formData.get("existing_gallery") as string | null);
-
-  let media: Awaited<ReturnType<typeof getDepartmentMedia>>;
+  let coverUrl: string | null;
+  let added: string[];
   try {
-    media = await getDepartmentMedia(formData, existingGallery);
+    coverUrl = await uploadCoverIfPresent(formData);
+    added = await uploadDepartmentGallery(formData);
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Unable to upload department media." };
   }
 
-  const updateData: Record<string, unknown> = { ...parsed.data, gallery: media.gallery };
-  if (media.imageUrl) updateData.image_url = media.imageUrl;
+  // The gallery always grows from whatever is stored now, so photos removed
+  // from the department page are never resurrected by saving this form.
+  const storedGallery = await readStoredGallery(id);
+  const updateData: Record<string, unknown> = {
+    ...parsed.data,
+    gallery: sanitizeGallery([...storedGallery, ...added]),
+  };
+  if (coverUrl) updateData.image_url = coverUrl;
 
   const { error } = await supabase.from("departments").update(updateData).eq("id", id);
   if (error) return { error: error.message };
 
-  revalidatePath("/dashboard/departments");
-  revalidatePath(`/dashboard/departments/${id}`);
-  revalidatePath("/ministries");
-  revalidatePath(`/ministries/${id}`);
+  revalidateDepartment(id);
   redirect(`/dashboard/departments/${id}`);
 }
 
@@ -154,12 +127,20 @@ export async function deleteDepartment(id: string): Promise<void> {
   await requireAdmin();
 
   const supabase = await createClient();
-  const { error } = await supabase.from("departments").delete().eq("id", id);
+  const { data } = await supabase.from("departments").select("image_url, gallery").eq("id", id).maybeSingle();
 
+  const { error } = await supabase.from("departments").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
-  revalidatePath("/dashboard/departments");
-  revalidatePath("/ministries");
+  // Storage cleanup happens after the row is gone so a failure there never
+  // blocks the delete the admin actually asked for.
+  const mediaUrls = [
+    ...sanitizeGallery((data?.gallery as string[] | null) ?? []),
+    ...(data?.image_url ? [data.image_url as string] : []),
+  ];
+  await deleteDepartmentImages(mediaUrls);
+
+  revalidateDepartment();
   redirect("/dashboard/departments");
 }
 

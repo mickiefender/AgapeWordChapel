@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAvailableDepartmentMembers, getDepartment, getDepartmentMembers } from "@/lib/queries/departments";
 import { AddDepartmentMembers } from "@/components/departments/add-department-members";
+import { DepartmentGalleryManager } from "@/components/departments/department-gallery-manager";
 import { PageHeader } from "@/components/ui/stat-card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Building2, Pencil, Users, ExternalLink, ImageIcon, Video } from "lucide-react";
+import { Pencil, Users, ExternalLink, Video } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -45,31 +46,26 @@ export default async function DepartmentDetailPage({ params }: { params: Promise
         }
       />
 
-      {department.image_url && (
-        <div className="mb-6 overflow-hidden rounded-2xl border border-border/80">
-          <img src={department.image_url} alt={department.name} className="h-48 w-full object-cover sm:h-64" />
-        </div>
-      )}
+      <div className="mt-6">
+        <DepartmentGalleryManager
+          departmentId={department.id}
+          departmentName={department.name}
+          coverImage={department.image_url}
+          gallery={department.gallery ?? []}
+        />
+      </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-card">
         <div className="flex items-center justify-between gap-4 border-b border-border/70 px-5 py-4 sm:px-6">
           <div>
             <h3 className="font-semibold tracking-tight">Members</h3>
             <p className="mt-1 text-xs text-muted-foreground">{members.length} people in this department</p>
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              {department.gallery?.length ? (
-                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <ImageIcon className="h-3.5 w-3.5 text-primary" />
-                  {department.gallery.length} gallery image{department.gallery.length === 1 ? "" : "s"}
-                </span>
-              ) : null}
-              {department.video_url ? (
-                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Video className="h-3.5 w-3.5 text-primary" />
-                  Featured video
-                </span>
-              ) : null}
-            </div>
+            {department.video_url ? (
+              <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Video className="h-3.5 w-3.5 text-primary" />
+                Featured video
+              </span>
+            ) : null}
           </div>
           <AddDepartmentMembers departmentId={id} members={availableMembers} />
         </div>
