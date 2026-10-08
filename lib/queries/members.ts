@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Member } from "@/types";
+import type { Member, MemberStatus } from "@/types";
 
 export type MemberFilters = {
   search?: string;
@@ -19,6 +19,35 @@ export type MembersResponse = {
   page: number;
   pageSize: number;
 };
+
+export type SmsRecipient = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  membership_status: MemberStatus;
+};
+
+export async function getSmsRecipients(): Promise<SmsRecipient[]> {
+  const supabase = await createClient();
+  const pageSize = 1000;
+  const recipients: SmsRecipient[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("members")
+      .select("id, first_name, last_name, phone, membership_status")
+      .not("phone", "is", null)
+      .order("first_name")
+      .range(from, from + pageSize - 1);
+
+    if (error) throw new Error(`Unable to load SMS recipients: ${error.message}`);
+
+    const page = (data ?? []).filter((member): member is SmsRecipient => typeof member.phone === "string" && member.phone.trim() !== "");
+    recipients.push(...page);
+    if ((data ?? []).length < pageSize) return recipients;
+  }
+}
 
 export async function getMembers(filters: MemberFilters = {}): Promise<MembersResponse> {
   const supabase = await createClient();

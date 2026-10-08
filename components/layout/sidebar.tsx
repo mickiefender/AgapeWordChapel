@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Users,
+  Cake,
   UserPlus,
   ClipboardList,
   Building2,
@@ -54,6 +55,7 @@ const NAV: NavSection[] = [
     title: "People",
     items: [
       { label: "Members", href: "/dashboard/members", icon: Users },
+      { label: "Birthdays", href: "/dashboard/birthdays", icon: Cake },
       { label: "Visitors", href: "/dashboard/visitors", icon: UserPlus },
       { label: "Follow-ups", href: "/dashboard/follow-ups", icon: ClipboardList },
       { label: "Admin Users", href: "/dashboard/admin-users", icon: UserCog },

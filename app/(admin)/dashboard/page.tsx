@@ -1,4 +1,5 @@
 import { getDashboardData } from "@/lib/queries/dashboard";
+import { getBirthdayOverview } from "@/lib/queries/birthdays";
 import { StatCard, PageHeader } from "@/components/ui/stat-card";
 import { TrendChart, ParticipationBarChart, GrowthLegendChart } from "@/components/dashboard/charts";
 import { Card } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import {
   UserPlus,
   CalendarCheck,
   CalendarDays,
+  Cake,
   Clock,
   Wallet,
   ClipboardList,
@@ -31,7 +33,7 @@ const statusBadgeVariant: Record<string, "default" | "success" | "info" | "warni
 };
 
 export default async function DashboardPage() {
-  const data = await getDashboardData();
+  const [data, birthdayOverview] = await Promise.all([getDashboardData(), getBirthdayOverview()]);
   const { stats } = data;
 
   const givingGrowth =
@@ -132,6 +134,57 @@ export default async function DashboardPage() {
           iconTone="emerald"
         />
       </div>
+
+      <Card className="group relative overflow-hidden border-primary/15 bg-gradient-to-br from-primary/[0.08] via-card to-card shadow-card">
+        <div className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full bg-primary/[0.07] blur-3xl transition-colors group-hover:bg-primary/[0.12]" />
+        <div className="relative grid gap-6 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center md:p-6">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-background/80 text-primary shadow-sm">
+              <Cake className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">People &amp; care</p>
+              <h3 className="mt-1 text-lg font-semibold tracking-tight">Celebrate our members</h3>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {birthdayOverview.today > 0
+                  ? `${birthdayOverview.today} member${birthdayOverview.today === 1 ? "" : "s"} celebrating today, with ${birthdayOverview.upcoming.length} more birthdays in the next 30 days.`
+                  : birthdayOverview.upcoming.length > 0
+                    ? `${birthdayOverview.upcoming.length} member${birthdayOverview.upcoming.length === 1 ? "" : "s"} have a birthday in the next 30 days. Make sure they feel remembered.`
+                    : "No birthdays in the next 30 days. Keep member profiles up to date to celebrate every special day."}
+              </p>
+              {birthdayOverview.upcoming.length > 0 && (
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="flex -space-x-2">
+                    {birthdayOverview.upcoming.slice(0, 4).map((birthday) => (
+                      <Avatar
+                        key={birthday.id}
+                        src={birthday.avatarUrl}
+                        firstName={birthday.firstName}
+                        lastName={birthday.lastName}
+                        size="sm"
+                        className="ring-2 ring-card"
+                      />
+                    ))}
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground">
+                    Coming up: <span className="font-medium text-foreground">{birthdayOverview.upcoming.slice(0, 2).map((birthday) => birthday.firstName).join(", ")}</span>
+                    {birthdayOverview.upcoming.length > 2 && ` +${birthdayOverview.upcoming.length - 2} more`}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/70 p-3 sm:min-w-56 sm:flex-col sm:items-stretch sm:justify-center sm:gap-3 sm:border-0 sm:bg-transparent sm:p-0">
+            <div className="text-left sm:text-right">
+              <p className="text-2xl font-bold tracking-tight">{birthdayOverview.upcoming.length}</p>
+              <p className="text-xs text-muted-foreground">next 30 days</p>
+            </div>
+            <Button size="sm" asChild>
+              <Link href="/dashboard/birthdays">Open birthday calendar <ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Charts row 1 */}
       <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">

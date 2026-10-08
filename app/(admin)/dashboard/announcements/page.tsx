@@ -1,6 +1,8 @@
 import { CheckCircle2, Clock3, MessageSquareText, Send, UsersRound, XCircle } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { getSmsHistory } from "@/lib/queries/sms-history";
+import type { SmsAudience } from "@/lib/queries/sms-history";
+import { getSmsRecipients } from "@/lib/queries/members";
 import { BulkSmsComposer } from "@/components/announcements/bulk-sms-composer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +10,23 @@ import { PageHeader, StatCard } from "@/components/ui/stat-card";
 
 export const dynamic = "force-dynamic";
 
-const audienceLabels = { all: "All members", active: "Active members", workers: "Workers & leaders" };
+const audienceLabels: Record<SmsAudience, string> = {
+  all: "All members",
+  active: "Active members",
+  workers: "Workers & leaders",
+  individual_member: "Individual member",
+  manual_number: "Manual number",
+};
 
-export default async function AnnouncementsPage() {
+export default async function AnnouncementsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireAdmin();
-  const history = await getSmsHistory();
+  const [history, members, params] = await Promise.all([getSmsHistory(), getSmsRecipients(), searchParams]);
+  const initialMemberId = typeof params.memberId === "string" ? params.memberId : undefined;
+  const initialMessage = typeof params.message === "string" ? params.message : undefined;
   const sent = history.filter((entry) => entry.status === "sent");
   const failed = history.filter((entry) => entry.status === "failed");
   const recipients = sent.reduce((total, entry) => total + entry.recipientCount, 0);
@@ -26,7 +40,7 @@ export default async function AnnouncementsPage() {
         <StatCard title="Failed sends" value={failed.length} description="Messages needing attention" icon={XCircle} iconTone="rose" />
         <StatCard title="Campaign history" value={history.length} description="Latest 100 campaigns" icon={Clock3} iconTone="violet" />
       </div>
-      <BulkSmsComposer />
+      <BulkSmsComposer members={members} initialMemberId={initialMemberId} initialMessage={initialMessage} />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-primary" /> SMS history</CardTitle>

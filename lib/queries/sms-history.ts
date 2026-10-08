@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 
+export type SmsAudience = "all" | "active" | "workers" | "individual_member" | "manual_number";
+
 export type SmsHistoryEntry = {
   id: string;
   message: string;
-  audience: "all" | "active" | "workers";
+  audience: SmsAudience;
   status: "sent" | "failed";
   recipientCount: number;
   providerResponse: string | null;
